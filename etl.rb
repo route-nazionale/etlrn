@@ -10,15 +10,11 @@ require 'awesome_print'
 require 'mysql2'
 
 require 'yaml'
-require 'sinatra'
 require 'active_record'
 require 'composite_primary_keys'
 
 CONFIG = YAML.load_file("config.yml") unless defined? CONFIG
-
 EDDA_DB = CONFIG['db']['edda_test']
-
-set :database, EDDA_DB
 
 module ImporterNew
   class ImporterNewDatabase < ActiveRecord::Base
@@ -98,7 +94,9 @@ class Caricamento
 
   def self.carica_routes
     gemellaggi = CSV.read(file_gemellaggi, headers: true, col_sep: "\t")
-       
+    gemellaggi.map{|i| [i["Area"], i["Route"]]}.uniq.each do |riga_gemellaggio|
+      insert_gemellaggi(riga_gemellaggio)
+    end   
   end
 
 
@@ -120,6 +118,18 @@ class Caricamento
       vc.assegna_idvclan
       vc.save
   end
+
+  def self.insert_route(record_gemellaggio)
+    area = record_gemellaggio["Area"]
+    nome = record_gemellaggio["Route"]
+    numero = nome.gsub(/\D+/,'').to_i
+    Route.where(nome:   nome,
+                numero: numero,
+                area:   area).first_or_create
+  end
+  def self.insert_gemellaggi(record_gemellaggio)
+    route = insert_route(riga_gemellaggio)
+  end
 end
 
 
@@ -130,6 +140,9 @@ end
 
 
 class Human < EddaDatabase
+end
+
+class Route < EddaDatabase
 end
 
 class Vclan < EddaDatabase
