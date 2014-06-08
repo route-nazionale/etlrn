@@ -1,0 +1,23 @@
+db:
+  common: &common
+    adapter:  "mysql2"
+    host:     "127.0.0.1"
+    port:     3306
+    username: ""
+    password: ""
+
+  importer:
+    <<: *common
+    database: "importer"
+
+  importer_new:
+    <<: *common
+    database: "importer_new"
+
+  edda_production:
+    <<: *common
+    database: "edda_production"
+
+  edda_test:
+    <<: *common
+    database: "edda_test"
