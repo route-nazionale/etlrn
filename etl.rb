@@ -36,7 +36,7 @@ module Importer
   end
 
   class Quartiere < ImporterDatabase
-    self.table_name = "Quartiere"
+    self.table_name = "quartiere"
   end
 
   class Capoextra < ImporterDatabase
@@ -138,6 +138,8 @@ end
 ## 1) caricamento vclan
 ## 2) caricamento gemellaggi
 ## 3) caricamento ragazzi
+## 4) caricamento capi rs
+## 5) posizionamento base quartieri
 
 
 class Caricamento
@@ -373,7 +375,8 @@ class Caricamento
   end
 
   def self.posiziona_route_base
-    Import::Quartiere
+    6.times{|i| District.where( name: "sottocampo #{i+1}").first_or_create}
+    Importer::Quartiere.all.each{|i| r = Route.where(numero: i[:route]).first; r.quartiere = i[:quartiere]; r.save}.size
   end
 
   ## creazione GEMELLAGGIO
@@ -413,32 +416,76 @@ class EddaDatabase < ActiveRecord::Base
 end
 
 
-class Human < EddaDatabase
-  belongs_to :vclan
+class District < EddaDatabase
+  has_many :routes, foreign_key: 'quartiere'
+  has_many :gemellaggios, through: :routes
+  has_many :vclans, through: :gemellaggios
+  has_many :humen, through: :vclans
+
+
+  def self.situazione
+    situa = {RN: {tot_rs: Human.rs.count,
+                  sc1:    Human.sc1.count,
+                  sc2:    Human.sc2.count,
+                  sc3:    Human.sc3.count,
+                  sc4:    Human.sc4.count,
+                  sc5:    Human.sc5.count,
+                }
+            }
+
+    (1..5).map do |i|
+      d = District.find(i)
+       situa[d.id]  = {
+                      tot: d.humen.rs.count,
+                      sc1: d.humen.sc1.count,
+                      sc2: d.humen.sc2.count,
+                      sc3: d.humen.sc3.count,
+                      sc4: d.humen.sc4.count,
+                      sc5: d.humen.sc5.count,
+                    }
+    end
+
+    situa
+  end
 end
 
 class Route < EddaDatabase
+  belongs_to :district, foreign_key: 'quartiere'
   has_many :gemellaggios
   has_many  :vclans, through: :gemellaggios
+  has_many  :humen, through: :vclans
 end
 
 class Gemellaggio < EddaDatabase
   belongs_to :route
+  delegate :district, to: :route, allow_nil: true
   belongs_to :vclan
 end
 
 class Vclan < EddaDatabase
-  has_many :gemellaggios
+  has_one :gemellaggio
+  has_one :route, through: :gemellaggio
+  has_one :district, through: :route
   has_many :humen
-
 
   def assegna_idvclan
     self.idvclan = "#{self.idgruppo}-#{self.idunitagruppo}"
   end
 end
 
-class District < EddaDatabase
+class Human < EddaDatabase
+  belongs_to :vclan
+  delegate :district, to: :vclan, allow_nil: true
+
+  scope :rs, ->{where(rs: true)}
+  
+  scope :sc1, ->{where(stradadicoraggio1: true)}
+  scope :sc2, ->{where(stradadicoraggio2: true)}
+  scope :sc3, ->{where(stradadicoraggio3: true)}
+  scope :sc4, ->{where(stradadicoraggio4: true)}
+  scope :sc5, ->{where(stradadicoraggio5: true)}
 end
+
 
 class Topic < EddaDatabase
 end
