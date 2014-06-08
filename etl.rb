@@ -35,6 +35,10 @@ module Importer
     self.table_name = "capo"
   end
 
+  class Quartiere < ImporterDatabase
+    self.table_name = "Quartiere"
+  end
+
   class Capoextra < ImporterDatabase
     self.table_name = "capoextra"
   end
@@ -88,6 +92,14 @@ module ImporterNew
 
   class Capo < ImporterNewDatabase
     self.table_name = "capo"
+
+  
+    def ncolazione
+      self.attributes_before_type_cast['colazione'].to_i
+    end
+    def nalimentari
+      self.attributes_before_type_cast['alimentari'].to_i
+    end
   end
 
   class Capoextra < ImporterNewDatabase
@@ -176,12 +188,82 @@ class Caricamento
   def self.carica_ragazzi(classe_ragazzo=ImporterNew::Ragazzo,
                           ww_creation=false,
                           file_ragazzi_ww=CONFIG['files']['ragazzi_ww'])
-    Raise "dati #{classe_ragazzo} non coerenti: i codicei censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_ragazzi(classe_ragazzo)    
+    raise "dati #{classe_ragazzo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_ragazzi(classe_ragazzo)    
     classe_ragazzo.all.each do |record_ragazzo|
       import_ragazzo(record_ragazzo)
     end.size
   end
+
+  def self.carica_capi_rs(classe_capo=ImporterNew::Capo,
+                          ww_creation=false)
+    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)    
+    classe_capo.all.each do |record_capo|
+      importa_capo(record_capo)
+    end.size
+  end
   
+  
+
+
+
+
+  def self.codici_duplicati
+	["657986", "658054", "955534", "629147", "831387"]
+  end
+  def self.controllo_coerenza_capi_agesci(classe_capo)
+    #classe_capo.pluck(:codicecensimento).uniq.compact.size == classe_capo.count
+    a = (classe_capo.pluck(:codicecensimento).uniq.compact - codici_duplicati).size 
+    b = classe_capo.where("codicecensimento not in (? )", codici_duplicati ).count
+    a == b
+  end
+
+
+  def self.importa_capo(record_capo)
+    capo = Human.where(
+                        codice_censimento: record_capo.codicecensimento
+                      ).first_or_create(
+                                        rs: false,
+                                        scout: true
+                                        )
+    capo.nome            = record_capo[:nome]
+    capo.cognome         = record_capo[:cognome]
+    capo.sesso           = record_capo[:sesso]
+    capo.data_nascita    = record_capo[:datanascita]
+    capo.eta             = record_capo[:eta]
+    capo.idgruppo        = record_capo[:idgruppo]
+    capo.idunitagruppo   = definizione_unita(record_capo)
+    capo.vclan           = definizione_vclan(record_capo)
+
+    capo.ruolo_id                  = record_capo[:ruolo]
+
+    capo.colazione              = record_capo.ncolazione
+    capo.dieta_alimentare_id    = record_capo.nalimentari
+
+    capo.el_intolleranze_alimentari = record_capo[:intolleranzealimentari]
+    capo.el_allergie_alimentari     = record_capo[:allergiealimentari]
+    capo.el_allergie_farmaci        = record_capo[:allergiefarmaci]
+    
+    capo.fisiche                = record_capo[:fisiche]
+    capo.lis                    = record_capo[:lis]
+    capo.psichiche              = record_capo[:psichiche]
+    capo.sensoriali             = record_capo[:sensoriali]
+
+    capo.patologie              = record_capo[:patologie]
+
+    
+    capo.email                  = record_capo[:email]
+    capo.indirizzo              = record_capo[:indirizzo]
+    capo.cap                    = record_capo[:cap]
+    capo.citta                  = record_capo[:citta]
+    capo.provincia              = record_capo[:provincia]
+    capo.cellulare              = record_capo[:cellulare]
+    capo.abitazione             = record_capo[:abitazione]
+  
+    capo.save
+    
+  end
+
+
   def self.controllo_coerenza_ragazzi(classe_ragazzo)
     classe_ragazzo.pluck(:codicecensimento).uniq.compact.size == classe_ragazzo.count
   end
@@ -228,18 +310,24 @@ class Caricamento
   end
 
   ## se idunitagruppo non è valorizzata si assume "T1"
-  def self.definizione_unita(record_ragazzo)
-    iduni = record_ragazzo.idunitagruppo
+  def self.definizione_unita(record)
+    iduni = record.idunitagruppo
     if iduni.empty?
-      "T1"
+      case record.class
+      when ImporterNew::Ragazzo then "T1"
+      when Importer::Ragazzo then "T1"
+      when ImporterNew::Capo then ""
+      else 
+        ""  
+      end
     else
       iduni
     end
   end
 
-  def self.definizione_vclan(record_ragazzo)
-    vclan = Vclan.where(idgruppo:      record_ragazzo.idgruppo,
-                        idunitagruppo: definizione_unita(record_ragazzo)
+  def self.definizione_vclan(record)
+    vclan = Vclan.where(idgruppo:      record.idgruppo,
+                        idunitagruppo: definizione_unita(record)
                         ).first    
   end
 
@@ -282,6 +370,10 @@ class Caricamento
     Route.where(name:   nome,
                 numero: numero,
                 area:   area).first_or_create
+  end
+
+  def self.posiziona_route_base
+    Import::Quartiere
   end
 
   ## creazione GEMELLAGGIO
@@ -344,4 +436,21 @@ class Vclan < EddaDatabase
     self.idvclan = "#{self.idgruppo}-#{self.idunitagruppo}"
   end
 end
+
+class District < EddaDatabase
+end
+
+class Topic < EddaDatabase
+end
+
+class Colazione < EddaDatabase
+end
+
+class Dietabase < EddaDatabase
+end
+
+class Event < EddaDatabase
+end
+
+
 
