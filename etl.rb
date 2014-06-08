@@ -12,6 +12,8 @@ require 'mysql2'
 require 'yaml'
 require 'active_record'
 require 'composite_primary_keys'
+require 'csv'
+
 
 CONFIG = YAML.load_file("config.yml") unless defined? CONFIG
 EDDA_DB = CONFIG['db']['edda_test']
@@ -72,8 +74,7 @@ class Caricamento
 
   def self.carica_vclan(classe_gruppo=ImporterNew::Gruppo, 
                         ww_creation=true, 
-                        file_gruppi_ww=CONFIG['files']['gruppi_ww'],
-                        file_gemellaggi=CONFIG['files']['gemellaggi'])
+                        file_gruppi_ww=CONFIG['files']['gruppi_ww'])
     
 
     classe_gruppo.all.each do |record_gruppo|
@@ -92,9 +93,9 @@ class Caricamento
 
   end
 
-  def self.carica_routes
+  def self.carica_routes(file_gemellaggi=CONFIG['files']['gemellaggi'])
     gemellaggi = CSV.read(file_gemellaggi, headers: true, col_sep: "\t")
-    gemellaggi.map{|i| [i["Area"], i["Route"]]}.uniq.each do |riga_gemellaggio|
+    gemellaggi.each do |riga_gemellaggio|
       insert_gemellaggi(riga_gemellaggio)
     end   
   end
@@ -123,12 +124,24 @@ class Caricamento
     area = record_gemellaggio["Area"]
     nome = record_gemellaggio["Route"]
     numero = nome.gsub(/\D+/,'').to_i
-    Route.where(nome:   nome,
+    Route.where(name:   nome,
                 numero: numero,
                 area:   area).first_or_create
   end
   def self.insert_gemellaggi(record_gemellaggio)
-    route = insert_route(riga_gemellaggio)
+    route = insert_route(record_gemellaggio)
+    vclan = Vclan.where(nome: record_gemellaggio["gruppo_capo"], 
+                        idunitagruppo: record_gemellaggio["unita_gruppo_capo"]).first
+    if vclan
+      gem = route.gemellaggios.where(vclan: vclan).first_or_initialize
+      gem.ospitante = true if record_gemellaggio["livello ospite"] == '0'
+      gem.save or puts gem.errors.inspect
+    else
+      ## TODO log
+      puts "gemellaggio non caricabile: #{record_gemellaggio.to_hash}"  
+    end
+
+
   end
 end
 
@@ -143,6 +156,13 @@ class Human < EddaDatabase
 end
 
 class Route < EddaDatabase
+  has_many :gemellaggios
+  has_many  :vclans, through: :gemellaggios
+end
+
+class Gemellaggio < EddaDatabase
+  belongs_to :route
+  belongs_to :vclan
 end
 
 class Vclan < EddaDatabase
