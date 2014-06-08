@@ -262,7 +262,6 @@ class Caricamento
     capo.abitazione             = record_capo[:abitazione]
   
     capo.save
-    
   end
 
 
@@ -307,8 +306,6 @@ class Caricamento
     ragazzo.rs    = true
     ragazzo.scout = true
     ragazzo.save
-
-
   end
 
   ## se idunitagruppo non è valorizzata si assume "T1"
@@ -374,9 +371,10 @@ class Caricamento
                 area:   area).first_or_create
   end
 
-  def self.posiziona_route_base
+  def self.posiziona_route_base(file_vincoli=CONFIG["files"]["vincoli"])
     6.times{|i| District.where( name: "sottocampo #{i+1}").first_or_create}
     Importer::Quartiere.all.each{|i| r = Route.where(numero: i[:route]).first; r.quartiere = i[:quartiere]; r.save}.size
+     vincoli = CSV.read(file_vincoli, headers: true, col_sep: "\t")
   end
 
   ## creazione GEMELLAGGIO
