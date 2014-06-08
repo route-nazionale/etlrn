@@ -1,7 +1,6 @@
 class CreateHumen < ActiveRecord::Migration
   def change
     create_table :humen do |t|
-      t.integer     :id
       t.string      :cu
       t.integer     :codice_censimento
       t.string      :idgruppo
@@ -56,11 +55,10 @@ class CreateHumen < ActiveRecord::Migration
       t.boolean     :stradadicoraggio3
       t.boolean     :stradadicoraggio4
       t.boolean     :stradadicoraggio5
-
-      t.datetime    :updated_at
-      t.datetime    :created_at
+      t.timestamps
+      # t.datetime    :updated_at
+      # t.datetime    :created_at
     end
-    add_index :humen, :id
     add_index :humen, :cu
     add_index :humen, :codice_censimento
     add_index :humen, :vclan_id

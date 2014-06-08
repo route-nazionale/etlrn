@@ -21,3 +21,6 @@ db:
   edda_test:
     <<: *common
     database: "edda_test"
+
+files:
+  gruppi_ww: '../resources/gruppi_WW_v1.csv'

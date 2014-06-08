@@ -10,7 +10,7 @@ require 'awesome_print'
 require 'mysql2'
 
 require 'yaml'
-#require 'sinatra'
+require 'sinatra'
 require 'active_record'
 require 'composite_primary_keys'
 
@@ -18,8 +18,7 @@ CONFIG = YAML.load_file("config.yml") unless defined? CONFIG
 
 EDDA_DB = CONFIG['db']['edda_test']
 
-
-#set :database, EDDA_DB
+set :database, EDDA_DB
 
 module ImporterNew
   class ImporterNewDatabase < ActiveRecord::Base
@@ -75,11 +74,36 @@ class Caricamento
   ## clan duplicati in piu record
   ## clan internazionali mancanti
 
-  def self.carica_vclan(classe_gruppo=ImporterNew::Gruppo)
+  def self.carica_vclan(classe_gruppo=ImporterNew::Gruppo, 
+                        ww_creation=true, 
+                        file_gruppi_ww=CONFIG['files']['gruppi_ww'],
+                        file_gemellaggi=CONFIG['files']['gemellaggi'])
     
 
     classe_gruppo.all.each do |record_gruppo|
-      if record_gruppo.unita.empty?
+      insert_gruppo(record_gruppo)      
+    end
+
+    ## creazione clan internazionali
+
+    if ww_creation
+      gww = CSV.read(file_gruppi_ww, headers: true, col_sep: "\t")
+      gww.each do |riga|
+        record_gruppo = ImporterNew::Gruppo.new(riga.to_hash)
+        insert_gruppo(record_gruppo)      
+      end
+    end
+
+  end
+
+  def self.carica_routes
+    gemellaggi = CSV.read(file_gemellaggi, headers: true, col_sep: "\t")
+       
+  end
+
+
+  def self.insert_gruppo(record_gruppo)
+    if record_gruppo.unita.empty?
         record_gruppo.unita = "T1"
         puts "clan senza codice unita: #{record_gruppo.idgruppo} #{record_gruppo.nome} "
         ## TODO log aggiunte - necessita per extra agesci
@@ -95,7 +119,6 @@ class Caricamento
                   )
       vc.assegna_idvclan
       vc.save
-    end
   end
 end
 
