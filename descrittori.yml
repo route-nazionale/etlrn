@@ -1,0 +1,39 @@
+dietabase:
+  -
+    kkey: 1
+    name: 'NESSUNA'
+  -
+    kkey: 2
+    name: 'VEGETARIANO'
+  -
+    kkey: 3
+    name: 'VEGANO'
+colaziones:
+  -
+    kkey: 1
+    name: 'LATTE'
+  -
+    kkey: 2
+    name: 'THE'
+  -
+    kkey: 3
+    name: 'ALTRO'
+chiefroles:
+  -
+    kkey: 1
+    description: 'CAPO UNITA'
+  -
+    kkey: 2
+    description: 'MAESTRO DEI NOVIZI'
+  -
+    kkey: 3
+    description: 'ASSISTENTE ECCLESIASTICO'
+  -
+    kkey: 4
+    description: 'ASSISTENTE ECCLESIASTICO'
+  -
+    kkey: 5
+    description: 'AIUTO MAESTRO DEI NOVIZI'
+  -
+    kkey: 0
+    description: 'CAPO GENERICO'

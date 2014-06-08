@@ -135,14 +135,22 @@ end
 
 ### ORDINE DA SEGUIRE
 ##
+## 0) popolamento descrittori
 ## 1) caricamento vclan
 ## 2) caricamento gemellaggi
 ## 3) caricamento ragazzi
 ## 4) caricamento capi rs
-## 5) posizionamento base quartieri
+## 5) posizionamento base route
 
 
 class Caricamento
+
+  def self.popolamento_descrittori(file_popolamento=CONFIG['files']['descrittori'])
+    descrittori = YAML.load_file(file_popolamento)
+    descrittori["dietabase"].each{|dieta|    Dietabase.where(dieta).first_or_create}
+    descrittori["colaziones"].each{|dieta|   Colazione.where(dieta).first_or_create}
+    descrittori["chiefroles"].each{|dieta|   Chiefrole.where(dieta).first_or_create}
+  end
 
   ## attenzioni da avere:
   ##
@@ -374,7 +382,13 @@ class Caricamento
   def self.posiziona_route_base(file_vincoli=CONFIG["files"]["vincoli"])
     6.times{|i| District.where( name: "sottocampo #{i+1}").first_or_create}
     Importer::Quartiere.all.each{|i| r = Route.where(numero: i[:route]).first; r.quartiere = i[:quartiere]; r.save}.size
-     vincoli = CSV.read(file_vincoli, headers: true, col_sep: "\t")
+    vincoli = CSV.read(file_vincoli, headers: true, col_sep: "\t")
+    vincoli.map{|i| Route.find(i["route"]).update_attributes(
+                                                          quartiere: i["sc"],
+                                                          quartiere_lock: true
+                                                          )
+                }
+
   end
 
   ## creazione GEMELLAGGIO
@@ -402,9 +416,6 @@ class Caricamento
 
 
   end
-
-
-  
 end
 
 
@@ -492,6 +503,9 @@ class Colazione < EddaDatabase
 end
 
 class Dietabase < EddaDatabase
+end
+
+class Chiefrole < EddaDatabase
 end
 
 class Event < EddaDatabase
