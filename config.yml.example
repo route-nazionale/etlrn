@@ -14,6 +14,10 @@ db:
     <<: *common
     database: "importer_new"
 
+  camst:
+    <<: *common
+    database: "camst"
+
   edda_production: &edda_production
     <<: *common
     database: "edda_production"
@@ -31,4 +35,4 @@ files:
   gruppi_ww:   '../resources/gruppi_WW_v1.csv'
   gemellaggi:  '../resources/IT_GEMELLAGGI_ridotto_v3_0.csv'
   vincoli:     '../resources/vincoli_finali.csv'
-  descrittori: './descrittori.yml' 
+  descrittori: './descrittori.yml'
