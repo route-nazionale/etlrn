@@ -38,7 +38,6 @@ chiefroles:
     kkey: 0
     description: 'CAPO GENERICO'
 
-    kkey  description ruolo
 periodipartecipazione:
   -
     kkey:         1

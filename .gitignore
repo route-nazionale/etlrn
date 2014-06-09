@@ -1,3 +1,4 @@
 /config.yml
 .bundle/
 Gemfile.lock
+/db/structure.sql

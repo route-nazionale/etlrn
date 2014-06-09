@@ -7,7 +7,7 @@ class CreatePeriodipartecipaziones < ActiveRecord::Migration
       t.integer :to_day
       t.integer :from_meal
       t.integer :to_meal
-      t.integer :ruolo
+      t.string :ruolo
       t.timestamps
     end
     add_index :periodipartecipaziones, [:kkey, :ruolo]
