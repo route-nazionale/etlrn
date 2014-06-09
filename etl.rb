@@ -120,7 +120,7 @@ module ImporterNew
 
   class Capolaboratorio < ImporterNewDatabase
     self.table_name = "capolaboratorio"
-    
+
     def ncolazione
       self.attributes_before_type_cast['colazione'].to_i
     end
@@ -711,6 +711,8 @@ class Vclan < EddaDatabase
 end
 
 class Human < EddaDatabase
+  belongs_to :periodipartecipazione, foreign_key: :periodo_partecipazione_id
+
   belongs_to :vclan
   delegate :district, to: :vclan, allow_nil: true
 
@@ -742,6 +744,7 @@ class Event < EddaDatabase
 end
 
 class Periodipartecipazione < EddaDatabase
+  has_many :humen, foreign_key: :periodo_partecipazione_id
 end
 
 
