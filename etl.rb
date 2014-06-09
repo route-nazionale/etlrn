@@ -67,7 +67,7 @@ module Importer
 
     def ordinale
       idgruppo.gsub(/\D+/,'')
-    end 
+    end
   end
 end
 
@@ -85,7 +85,7 @@ module ImporterNew
 
     belongs_to :gruppo, foreign_key: [:idgruppo, :idunitagruppo]
 
-	
+
     def ncolazione
       self.attributes_before_type_cast['colazione'].to_i
     end
@@ -98,7 +98,7 @@ module ImporterNew
   class Capo < ImporterNewDatabase
     self.table_name = "capo"
 
-  
+
     def ncolazione
       self.attributes_before_type_cast['colazione'].to_i
     end
@@ -137,9 +137,10 @@ module ImporterNew
 
     def ordinale
       idgruppo.gsub(/\D+/,'')
-    end 
+    end
   end
 end
+
 
 
 ### ORDINE DA SEGUIRE
@@ -171,16 +172,16 @@ class Caricamento
   ##
   ## clan duplicati in piu record
   ## clan internazionali mancanti
-  ## 
+  ##
   ## soluzione implementata usare il file gruppi_ww
 
-  def self.carica_vclan(classe_gruppo=ImporterNew::Gruppo, 
-                        ww_creation=true, 
+  def self.carica_vclan(classe_gruppo=ImporterNew::Gruppo,
+                        ww_creation=true,
                         file_gruppi_ww=CONFIG['files']['gruppi_ww'])
-    
+
 
     classe_gruppo.all.each do |record_gruppo|
-      insert_gruppo(record_gruppo)      
+      insert_gruppo(record_gruppo)
     end
 
     ## creazione clan internazionali
@@ -189,14 +190,14 @@ class Caricamento
       gww = CSV.read(file_gruppi_ww, headers: true, col_sep: "\t")
       gww.each do |riga|
         record_gruppo = ImporterNew::Gruppo.new(riga.to_hash)
-        insert_gruppo(record_gruppo)      
+        insert_gruppo(record_gruppo)
       end
     end
 
   end
 
   ## CARICAMENTO ROUTE MOBILI E GEMELLAGGI
-  ## 
+  ##
   ## crea se non esiste la route
   ## crea se non esiste il gemellaggio specificando se ospitante
 
@@ -204,7 +205,7 @@ class Caricamento
     gemellaggi = CSV.read(file_gemellaggi, headers: true, col_sep: "\t")
     gemellaggi.each do |riga_gemellaggio|
       insert_gemellaggi(riga_gemellaggio)
-    end   
+    end
   end
 
   ## CARICAMENTO RAGAZZI
@@ -212,7 +213,7 @@ class Caricamento
   def self.carica_ragazzi(classe_ragazzo=ImporterNew::Ragazzo,
                           ww_creation=false,
                           file_ragazzi_ww=CONFIG['files']['ragazzi_ww'])
-    raise "dati #{classe_ragazzo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_ragazzi(classe_ragazzo)    
+    raise "dati #{classe_ragazzo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_ragazzi(classe_ragazzo)
     classe_ragazzo.all.each do |record_ragazzo|
       import_ragazzo(record_ragazzo)
     end.size
@@ -222,23 +223,23 @@ class Caricamento
 
   def self.carica_capi_rs(classe_capo=ImporterNew::Capo,
                           ww_creation=false)
-    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)    
+    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)
     classe_capo.all.each do |record_capo|
       importa_capo(record_capo)
     end.size
   end
 
   ## CARICAMENTO CAPI ONETEAM
-  
+
   def self.carica_capi_oneteam(classe_capo=ImporterNew::Capooneteam)
     Vclan.where(idvclan: 'ONETEAM-T1').first_or_create(idgruppo: 'ONETEAM', idunitagruppo: 'T1', ordinale: 'ONETEAM', nome: "ONETEAM", regione: 'SER')
 
-    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)    
+    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)
     classe_capo.all.each do |record_capo|
       importa_capo_oneteam(record_capo)
     end.size
   end
-  
+
   ## CARICAMENTO CAPI RS
 
   def self.codici_duplicati
@@ -246,7 +247,7 @@ class Caricamento
   end
   def self.controllo_coerenza_capi_agesci(classe_capo)
     #classe_capo.pluck(:codicecensimento).uniq.compact.size == classe_capo.count
-    a = (classe_capo.pluck(:codicecensimento).uniq.compact - codici_duplicati).size 
+    a = (classe_capo.pluck(:codicecensimento).uniq.compact - codici_duplicati).size
     b = classe_capo.where("codicecensimento not in (? )", codici_duplicati ).count
     a == b
   end
@@ -274,7 +275,7 @@ class Caricamento
     capo.idgruppo        = 'ONETEAM'
     capo.idunitagruppo   = 'T1'
     capo.vclan           = Vclan.where(idvclan: 'ONETEAM-T1').first
-    
+
     #capo.periodo partecipazione_id = definizione_periodo_partecipazione(record_capo, capo.periodo_partecipazione_id)
     capo.ruolo_id                  = record_capo[:ruolo]
 
@@ -284,7 +285,7 @@ class Caricamento
     capo.el_intolleranze_alimentari = record_capo[:intolleranzealimentari]
     capo.el_allergie_alimentari     = record_capo[:allergiealimentari]
     capo.el_allergie_farmaci        = record_capo[:allergiefarmaci]
-    
+
     capo.fisiche                = record_capo[:fisiche]
     capo.lis                    = record_capo[:lis]
     capo.psichiche              = record_capo[:psichiche]
@@ -294,7 +295,7 @@ class Caricamento
     capo.pagato                 = record_capo[:pagamento] or record_capo[:pagato]
     capo.mod_pagamento_id       = record_capo[:modpagamento]
 
-    
+
     capo.email                  = record_capo[:email]
     capo.indirizzo              = record_capo[:indirizzo]
     capo.cap                    = record_capo[:cap]
@@ -302,7 +303,7 @@ class Caricamento
     capo.provincia              = record_capo[:provincia]
     capo.cellulare              = record_capo[:cellulare]
     capo.abitazione             = record_capo[:abitazione]
-  
+
     capo.save
   end
 
@@ -331,7 +332,7 @@ class Caricamento
     capo.el_intolleranze_alimentari = record_capo[:intolleranzealimentari]
     capo.el_allergie_alimentari     = record_capo[:allergiealimentari]
     capo.el_allergie_farmaci        = record_capo[:allergiefarmaci]
-    
+
     capo.fisiche                = record_capo[:fisiche]
     capo.lis                    = record_capo[:lis]
     capo.psichiche              = record_capo[:psichiche]
@@ -339,7 +340,7 @@ class Caricamento
 
     capo.patologie              = record_capo[:patologie]
 
-    
+
     capo.email                  = record_capo[:email]
     capo.indirizzo              = record_capo[:indirizzo]
     capo.cap                    = record_capo[:cap]
@@ -347,7 +348,7 @@ class Caricamento
     capo.provincia              = record_capo[:provincia]
     capo.cellulare              = record_capo[:cellulare]
     capo.abitazione             = record_capo[:abitazione]
-  
+
     capo.save
   end
 
@@ -365,7 +366,7 @@ class Caricamento
     ragazzo.eta             = record_ragazzo.eta
     ragazzo.idgruppo        = record_ragazzo.idgruppo
     ragazzo.idunitagruppo   = definizione_unita(record_ragazzo)
-    
+
     ragazzo.vclan           = definizione_vclan(record_ragazzo)
 
     ragazzo.novizio         = record_ragazzo.novizio
@@ -376,7 +377,7 @@ class Caricamento
     ragazzo.el_intolleranze_alimentari = record_ragazzo.intolleranzealimentari
     ragazzo.el_allergie_alimentari     = record_ragazzo.allergiealimentari
     ragazzo.el_allergie_farmaci        = record_ragazzo.allergiefarmaci
-    
+
     ragazzo.fisiche                = record_ragazzo.fisiche
     ragazzo.lis                    = record_ragazzo.lis
     ragazzo.psichiche              = record_ragazzo.psichiche
@@ -403,8 +404,8 @@ class Caricamento
       when ImporterNew::Ragazzo then "T1"
       when Importer::Ragazzo then "T1"
       when ImporterNew::Capo then ""
-      else 
-        ""  
+      else
+        ""
       end
     else
       iduni
@@ -422,7 +423,7 @@ class Caricamento
     when ImporterNew::Capooneteam     then (actual_value.to_i + (periodo.to_i * 10))
     when ImporterNew::Capolaboratorio then (actual_value.to_i + (periodo.to_i * 100))
     when ImporterNew::Capoextra       then (actual_value.to_i + (periodo.to_i * 1000))
-    else 
+    else
       nil
     end
   end
@@ -430,7 +431,7 @@ class Caricamento
   def self.definizione_vclan(record)
     vclan = Vclan.where(idgruppo:      record.idgruppo,
                         idunitagruppo: definizione_unita(record)
-                        ).first    
+                        ).first
   end
 
 
@@ -448,7 +449,7 @@ class Caricamento
         ## TODO log aggiunte - necessita per extra agesci
       end
 
-      vc = Vclan.where(     idgruppo: record_gruppo.idgruppo, 
+      vc = Vclan.where(     idgruppo: record_gruppo.idgruppo,
                        idunitagruppo: record_gruppo.unita
                   ).first_or_initialize(
                     ordinale: record_gruppo.ordinale,
@@ -490,14 +491,14 @@ class Caricamento
   ##
   ## recuperata o creata la route cerca il vclan
   ## se lo trova crea il gemellaggio memorizzando se il clan è ospitante
-  ## 
+  ##
   ## se non lo trova log di errore sulla riga
-  ## 
+  ##
   ## TODO da spostare in Vclan metodo di ricerca pulito
 
   def self.insert_gemellaggi(record_gemellaggio)
     route = insert_route(record_gemellaggio)
-    vclan = Vclan.where(nome: record_gemellaggio["gruppo_capo"], 
+    vclan = Vclan.where(nome: record_gemellaggio["gruppo_capo"],
                         idunitagruppo: record_gemellaggio["unita_gruppo_capo"]).first
     if vclan
       gemel = route.gemellaggios.where(vclan: vclan).first_or_initialize
@@ -506,7 +507,7 @@ class Caricamento
       gemel.save or puts gemel.errors.inspect
     else
       ## TODO log
-      puts "gemellaggio non caricabile: #{record_gemellaggio.to_hash}"  
+      puts "gemellaggio non caricabile: #{record_gemellaggio.to_hash}"
     end
 
 
@@ -600,7 +601,7 @@ class Human < EddaDatabase
   scope :rs,   ->{where(rs: true)}
   scope :capi, ->{where(rs: false, scout: true)}
   scope :oneteam, ->{where(oneteam:true)}
-  
+
   scope :sc1, ->{where(stradadicoraggio1: true)}
   scope :sc2, ->{where(stradadicoraggio2: true)}
   scope :sc3, ->{where(stradadicoraggio3: true)}
