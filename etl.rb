@@ -5,7 +5,6 @@
 # require 'bundler'
 # Bundler.require
 
-
 require 'awesome_print'
 require 'mysql2'
 
@@ -115,6 +114,10 @@ module ImporterNew
 
     # alimentari is a TINYINT column
     # we just redefine the method here to return the value cast how we want it
+
+    def ncolazione
+      self.attributes_before_type_cast['colazione'].to_i
+    end
     def nalimentari
       self.attributes_before_type_cast['alimentari'].to_i
     end
@@ -194,7 +197,6 @@ class Caricamento
 
   ## CARICAMENTO RAGAZZI
 
-
   def self.carica_ragazzi(classe_ragazzo=ImporterNew::Ragazzo,
                           ww_creation=false,
                           file_ragazzi_ww=CONFIG['files']['ragazzi_ww'])
@@ -204,6 +206,8 @@ class Caricamento
     end.size
   end
 
+  ## CARICAMENTO CAPI RS
+
   def self.carica_capi_rs(classe_capo=ImporterNew::Capo,
                           ww_creation=false)
     raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)    
@@ -211,10 +215,19 @@ class Caricamento
       importa_capo(record_capo)
     end.size
   end
+
+  ## CARICAMENTO CAPI ONETEAM
+  
+  def self.carica_capi_oneteam(classe_capo=ImporterNew::Capooneteam)
+    Vclan.where(idvclan: 'ONETEAM-T1').first_or_create(idgruppo: 'ONETEAM', idunitagruppo: 'T1', ordinale: 'ONETEAM', nome: "ONETEAM", regione: 'SER')
+
+    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)    
+    classe_capo.all.each do |record_capo|
+      importa_capo_oneteam(record_capo)
+    end.size
+  end
   
   
-
-
 
 
   def self.codici_duplicati
@@ -225,6 +238,57 @@ class Caricamento
     a = (classe_capo.pluck(:codicecensimento).uniq.compact - codici_duplicati).size 
     b = classe_capo.where("codicecensimento not in (? )", codici_duplicati ).count
     a == b
+  end
+
+
+  def self.importa_capo_oneteam(record_capo)
+    capo = Human.where(
+                        codice_censimento: record_capo.codicecensimento
+                      ).first_or_create
+
+    capo.update_attributes(
+                                        rs: false,
+                                        scout: true,
+                                        oneteam: true
+                                        )
+    capo.nome            = record_capo[:nome]
+    capo.cognome         = record_capo[:cognome]
+    capo.sesso           = record_capo[:sesso]
+    capo.data_nascita    = record_capo[:datanascita]
+    capo.eta             = record_capo[:eta]
+    capo.idgruppo        = 'ONETEAM'
+    capo.idunitagruppo   = 'T1'
+    capo.vclan           = Vclan.where(idvclan: 'ONETEAM-T1').first
+    
+    #capo.periodo partecipazione_id = definizione_periodo_partecipazione(record_capo, capo.periodo_partecipazione_id)
+    capo.ruolo_id                  = record_capo[:ruolo]
+
+    capo.colazione              = record_capo.ncolazione
+    capo.dieta_alimentare_id    = record_capo.nalimentari
+
+    capo.el_intolleranze_alimentari = record_capo[:intolleranzealimentari]
+    capo.el_allergie_alimentari     = record_capo[:allergiealimentari]
+    capo.el_allergie_farmaci        = record_capo[:allergiefarmaci]
+    
+    capo.fisiche                = record_capo[:fisiche]
+    capo.lis                    = record_capo[:lis]
+    capo.psichiche              = record_capo[:psichiche]
+    capo.sensoriali             = record_capo[:sensoriali]
+
+    capo.patologie              = record_capo[:patologie]
+    capo.pagato                 = record_capo[:pagamento] or record_capo[:pagato]
+    capo.mod_pagamento_id       = record_capo[:modpagamento]
+
+    
+    capo.email                  = record_capo[:email]
+    capo.indirizzo              = record_capo[:indirizzo]
+    capo.cap                    = record_capo[:cap]
+    capo.citta                  = record_capo[:citta]
+    capo.provincia              = record_capo[:provincia]
+    capo.cellulare              = record_capo[:cellulare]
+    capo.abitazione             = record_capo[:abitazione]
+  
+    capo.save
   end
 
 
@@ -332,6 +396,22 @@ class Caricamento
     end
   end
 
+  ## se idunitagruppo non è valorizzata si assume "T1"
+  def self.definizione_periodo_partecipazione(record, actual_value)
+    periodo = record.periodopartecipazione
+
+    case record.class
+    when ImporterNew::Ragazzo then 1
+    when Importer::Ragazzo then 1
+    when ImporterNew::Capo then 1
+    when ImporterNew::Capooneteam     then (actual_value.to_i + (periodo.to_i * 10))
+    when ImporterNew::Capolaboratorio then (actual_value.to_i + (periodo.to_i * 100))
+    when ImporterNew::Capoextra       then (actual_value.to_i + (periodo.to_i * 1000))
+    else 
+      nil
+    end
+  end
+
   def self.definizione_vclan(record)
     vclan = Vclan.where(idgruppo:      record.idgruppo,
                         idunitagruppo: definizione_unita(record)
@@ -433,26 +513,42 @@ class District < EddaDatabase
 
 
   def self.situazione
-    situa = {RN: {tot_rs: Human.rs.count,
-                  sc1:    Human.sc1.count,
-                  sc2:    Human.sc2.count,
-                  sc3:    Human.sc3.count,
-                  sc4:    Human.sc4.count,
-                  sc5:    Human.sc5.count,
+    situa = {RN: {
+                  tot:{
+                    tot: Human.count,
+                    tot_capi: Human.capi.count,
+                    tot_rs: Human.rs.count,
+                  },
+                  capi:{
+
+                  },
+                  rs:{
+                  },
+                  sdc:
+                  {
+                    sc1:    Human.sc1.count,
+                    sc2:    Human.sc2.count,
+                    sc3:    Human.sc3.count,
+                    sc4:    Human.sc4.count,
+                    sc5:    Human.sc5.count,
+                  }
+
                 }
             }
 
-    (1..5).map do |i|
+    (1..5).map{ |i|
       d = District.find(i)
-       situa[d.id]  = {
-                      tot: d.humen.rs.count,
+      situa[d.id]  = {
                       sc1: d.humen.sc1.count,
                       sc2: d.humen.sc2.count,
                       sc3: d.humen.sc3.count,
                       sc4: d.humen.sc4.count,
                       sc5: d.humen.sc5.count,
                     }
-    end
+      situa[:RN][:tot][d.id] = d.humen.count
+      situa[:RN][:capi][d.id] = d.humen.capi.count
+      situa[:RN][:rs][d.id] = d.humen.rs.count
+      }
 
     situa
   end
@@ -486,7 +582,9 @@ class Human < EddaDatabase
   belongs_to :vclan
   delegate :district, to: :vclan, allow_nil: true
 
-  scope :rs, ->{where(rs: true)}
+  scope :rs,   ->{where(rs: true)}
+  scope :capi, ->{where(rs: false, scout: true)}
+  scope :oneteam, ->{where(oneteam:true)}
   
   scope :sc1, ->{where(stradadicoraggio1: true)}
   scope :sc2, ->{where(stradadicoraggio2: true)}
