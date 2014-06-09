@@ -294,8 +294,16 @@ class Caricamento
     end.size
   end
 
+  ## CARICAMENTO CAPI LABORATORI
 
+  def self.carica_capi_lab(classe_capo=ImporterNew::Capolaboratorio)
+    Vclan.where(idvclan: 'LAB-T1').first_or_create(idgruppo: 'LAB', idunitagruppo: 'T1', ordinale: 'LAB', nome: "LABORATORI", regione: 'SER')
 
+    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)
+    classe_capo.all.each do |record_capo|
+      importa_capo_extra(record_capo)
+    end.size
+  end
 
   ##### STRUMENTI
   def self.codici_duplicati
@@ -310,6 +318,56 @@ class Caricamento
 
 
 
+  def self.importa_capo_lab(record_capo)
+    
+    # se presente
+    if capo = Human.where(codice_censimento: record_capo.codicecensimento).first
+      capo.update_attributes(lab: true)
+    else
+      capo = Human.create(codice_censimento: record_capo.codicecensimento,
+                          rs: false,
+                          scout: true,
+                          lab: true   )
+
+      capo.nome            = record_capo[:nome]
+      capo.cognome         = record_capo[:cognome]
+      capo.sesso           = record_capo[:sesso]
+      capo.data_nascita    = record_capo[:datanascita]
+      capo.eta             = record_capo[:eta]
+      capo.idgruppo        = 'LAB'
+      capo.idunitagruppo   = 'T1'
+      capo.vclan           = Vclan.where(idvclan: 'LAB-T1').first
+
+      capo.ruolo_id               = record_capo[:ruolo]
+      capo.colazione              = record_capo.ncolazione
+      capo.dieta_alimentare_id    = record_capo.nalimentari
+
+      capo.el_intolleranze_alimentari = record_capo[:intolleranzealimentari]
+      capo.el_allergie_alimentari     = record_capo[:allergiealimentari]
+      capo.el_allergie_farmaci        = record_capo[:allergiefarmaci]
+
+      capo.fisiche                = record_capo[:fisiche]
+      capo.lis                    = record_capo[:lis]
+      capo.psichiche              = record_capo[:psichiche]
+      capo.sensoriali             = record_capo[:sensoriali]
+
+      capo.patologie              = record_capo[:patologie]
+      capo.pagato                 = record_capo[:pagamento] or record_capo[:pagato]
+      capo.mod_pagamento_id       = record_capo[:modpagamento]
+
+
+      capo.email                  = record_capo[:email]
+      capo.indirizzo              = record_capo[:indirizzo]
+      capo.cap                    = record_capo[:cap]
+      capo.citta                  = record_capo[:citta]
+      capo.provincia              = record_capo[:provincia]
+      capo.cellulare              = record_capo[:cellulare]
+      capo.abitazione             = record_capo[:abitazione]
+
+      capo.save
+    end
+    #capo.periodo partecipazione_id = definizione_periodo_partecipazione(record_capo, capo.periodo_partecipazione_id)
+  end
 
 
   def self.importa_capo_extra(record_capo)
