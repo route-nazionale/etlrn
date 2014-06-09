@@ -109,10 +109,24 @@ module ImporterNew
 
   class Capoextra < ImporterNewDatabase
     self.table_name = "capoextra"
+
+    def ncolazione
+      self.attributes_before_type_cast['colazione'].to_i
+    end
+    def nalimentari
+      self.attributes_before_type_cast['alimentari'].to_i
+    end
   end
 
   class Capolaboratorio < ImporterNewDatabase
     self.table_name = "capolaboratorio"
+    
+    def ncolazione
+      self.attributes_before_type_cast['colazione'].to_i
+    end
+    def nalimentari
+      self.attributes_before_type_cast['alimentari'].to_i
+    end
   end
 
   class Capooneteam < ImporterNewDatabase
@@ -168,7 +182,6 @@ module Camst
   class Quartier < CamstDatabase
     self.table_name = "meal_provision_quartier"
   end
-
 end
 
 
@@ -208,7 +221,6 @@ class Caricamento
   def self.carica_vclan(classe_gruppo=ImporterNew::Gruppo,
                         ww_creation=true,
                         file_gruppi_ww=CONFIG['files']['gruppi_ww'])
-
 
     classe_gruppo.all.each do |record_gruppo|
       insert_gruppo(record_gruppo)
@@ -270,10 +282,24 @@ class Caricamento
     end.size
   end
 
-  ## CARICAMENTO CAPI RS
+  ## CARICAMENTO CAPI EXTRA
 
+
+  def self.carica_capi_extra(classe_capo=ImporterNew::Capoextra)
+    Vclan.where(idvclan: 'EXTRA-T1').first_or_create(idgruppo: 'EXTRA', idunitagruppo: 'T1', ordinale: 'EXTRA', nome: "EXTRA", regione: 'SER')
+
+    raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)
+    classe_capo.all.each do |record_capo|
+      importa_capo_extra(record_capo)
+    end.size
+  end
+
+
+
+
+  ##### STRUMENTI
   def self.codici_duplicati
-	["657986", "658054", "955534", "629147", "831387"]
+  ["657986", "658054", "955534", "629147", "831387"]
   end
   def self.controllo_coerenza_capi_agesci(classe_capo)
     #classe_capo.pluck(:codicecensimento).uniq.compact.size == classe_capo.count
@@ -283,8 +309,59 @@ class Caricamento
   end
 
 
-  ##### STRUMENTI
 
+
+
+  def self.importa_capo_extra(record_capo)
+    
+    # se presente
+    if capo = Human.where(codice_censimento: record_capo.codicecensimento).first
+      capo.update_attributes(extra: true)
+    else
+      capo = Human.create(codice_censimento: record_capo.codicecensimento,
+                          rs: false,
+                          scout: true,
+                          extra: true   )
+
+      capo.nome            = record_capo[:nome]
+      capo.cognome         = record_capo[:cognome]
+      capo.sesso           = record_capo[:sesso]
+      capo.data_nascita    = record_capo[:datanascita]
+      capo.eta             = record_capo[:eta]
+      capo.idgruppo        = 'EXTRA'
+      capo.idunitagruppo   = 'T1'
+      capo.vclan           = Vclan.where(idvclan: 'EXTRA-T1').first
+
+      capo.ruolo_id               = record_capo[:ruolo]
+      capo.colazione              = record_capo.ncolazione
+      capo.dieta_alimentare_id    = record_capo.nalimentari
+
+      capo.el_intolleranze_alimentari = record_capo[:intolleranzealimentari]
+      capo.el_allergie_alimentari     = record_capo[:allergiealimentari]
+      capo.el_allergie_farmaci        = record_capo[:allergiefarmaci]
+
+      capo.fisiche                = record_capo[:fisiche]
+      capo.lis                    = record_capo[:lis]
+      capo.psichiche              = record_capo[:psichiche]
+      capo.sensoriali             = record_capo[:sensoriali]
+
+      capo.patologie              = record_capo[:patologie]
+      capo.pagato                 = record_capo[:pagamento] or record_capo[:pagato]
+      capo.mod_pagamento_id       = record_capo[:modpagamento]
+
+
+      capo.email                  = record_capo[:email]
+      capo.indirizzo              = record_capo[:indirizzo]
+      capo.cap                    = record_capo[:cap]
+      capo.citta                  = record_capo[:citta]
+      capo.provincia              = record_capo[:provincia]
+      capo.cellulare              = record_capo[:cellulare]
+      capo.abitazione             = record_capo[:abitazione]
+
+      capo.save
+    end
+    #capo.periodo partecipazione_id = definizione_periodo_partecipazione(record_capo, capo.periodo_partecipazione_id)
+  end
 
 
   def self.importa_capo_oneteam(record_capo)
