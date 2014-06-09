@@ -14,13 +14,21 @@ db:
     <<: *common
     database: "importer_new"
 
-  edda_production:
+  edda_production: &edda_production
     <<: *common
     database: "edda_production"
 
-  edda_test:
+  edda_test: &edda_test
     <<: *common
     database: "edda_test"
 
+# necessario per le migration
+development:
+  <<: *edda_test
+
+
 files:
-  gruppi_ww: '../resources/gruppi_WW_v1.csv'
+  gruppi_ww:   '../resources/gruppi_WW_v1.csv'
+  gemellaggi:  '../resources/IT_GEMELLAGGI_ridotto_v3_0.csv'
+  vincoli:     '../resources/vincoli_finali.csv'
+  descrittori: './descrittori.yml' 

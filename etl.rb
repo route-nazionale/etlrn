@@ -17,6 +17,9 @@ require 'csv'
 CONFIG = YAML.load_file("config.yml") unless defined? CONFIG
 EDDA_DB = CONFIG['db']['edda_test']
 
+
+## MODULO DI INTERFACCIA CON IMPORTER
+
 module Importer
   class ImporterDatabase < ActiveRecord::Base
     self.abstract_class = true
@@ -67,6 +70,9 @@ module Importer
     end 
   end
 end
+
+
+## MODULO DI INTERFACCIA CON IMPORTER_NEW
 
 module ImporterNew
   class ImporterNewDatabase < ActiveRecord::Base
@@ -146,7 +152,10 @@ end
 ## 5) posizionamento base route
 
 
+
 class Caricamento
+
+  ## POPOLAMENTO TABELLE RIFERIMENTO
 
   def self.popolamento_descrittori(file_popolamento=CONFIG['files']['descrittori'])
     descrittori = YAML.load_file(file_popolamento)
@@ -155,6 +164,9 @@ class Caricamento
     descrittori["chiefroles"].each{|dieta|   Chiefrole.where(dieta).first_or_create}
   end
 
+
+  ##CARICAMNETO GRUPPI E CLAN
+  ##
   ## attenzioni da avere:
   ##
   ## clan duplicati in piu record
@@ -227,8 +239,7 @@ class Caricamento
     end.size
   end
   
-  
-
+  ## CARICAMENTO CAPI RS
 
   def self.codici_duplicati
 	["657986", "658054", "955534", "629147", "831387"]
@@ -239,6 +250,10 @@ class Caricamento
     b = classe_capo.where("codicecensimento not in (? )", codici_duplicati ).count
     a == b
   end
+
+
+  ##### STRUMENTI
+
 
 
   def self.importa_capo_oneteam(record_capo)
