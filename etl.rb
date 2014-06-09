@@ -192,6 +192,7 @@ class Caricamento
     descrittori["dietabase"].each{|dieta|    Dietabase.where(dieta).first_or_create}
     descrittori["colaziones"].each{|dieta|   Colazione.where(dieta).first_or_create}
     descrittori["chiefroles"].each{|dieta|   Chiefrole.where(dieta).first_or_create}
+    descrittori["periodipartecipazione"].each{|dieta|   Periodipartecipazione.where(dieta).first_or_create}
   end
 
 
@@ -544,6 +545,15 @@ class Caricamento
 end
 
 
+class Popolamento
+  def self.casmt_vclan
+
+  end
+
+end
+
+
+
 class EddaDatabase < ActiveRecord::Base
   self.abstract_class = true
   establish_connection EDDA_DB
@@ -652,6 +662,9 @@ class Chiefrole < EddaDatabase
 end
 
 class Event < EddaDatabase
+end
+
+class Periodipartecipazione < EddaDatabase
 end
 
 

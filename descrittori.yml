@@ -37,3 +37,54 @@ chiefroles:
   -
     kkey: 0
     description: 'CAPO GENERICO'
+
+    kkey  description ruolo
+periodipartecipazione:
+  -
+    kkey:         1
+    description: "7 - 9 agosto 2014"
+    from_day:     7
+    to_day:       9
+    ruolo:        "LAB"
+  -
+    kkey:         2
+    description: "4 - 10 agosto 2014"
+    from_day:     4
+    to_day:       10
+    ruolo:        "LAB"
+  -
+    kkey:         3
+    description: "7 - 13 agosto 2014"
+    from_day:     7
+    to_day:       13
+    ruolo:        "LAB"
+  -
+    kkey:         4
+    description: "4 - 13 agosto 2014"
+    from_day:     4
+    to_day:       13
+    ruolo:        "LAB"
+  -
+    kkey:         1
+    description: "4 - 10 agosto 2014"
+    from_day:     4
+    to_day:       10
+    ruolo:        "ONE"
+  -
+    kkey:         2
+    description: "7 - 13 agosto 2014"
+    from_day:     7
+    to_day:       13
+    ruolo:        "ONE"
+  -
+    kkey:         3
+    description: "4 - 13 agosto 2014"
+    from_day:     4
+    to_day:       13
+    ruolo:        "ONE"
+  -
+    kkey:         1
+    description: "4 - 13 agosto 2014"
+    from_day:     4
+    to_day:       13
+    ruolo:        "EXTRA"
