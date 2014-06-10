@@ -319,7 +319,7 @@ class Caricamento
 
 
   def self.importa_capo_lab(record_capo)
-    
+
     # se presente
     if capo = Human.where(codice_censimento: record_capo.codicecensimento).first
       capo.update_attributes(lab: true)
@@ -371,7 +371,7 @@ class Caricamento
 
 
   def self.importa_capo_extra(record_capo)
-    
+
     # se presente
     if capo = Human.where(codice_censimento: record_capo.codicecensimento).first
       capo.update_attributes(extra: true)
@@ -685,6 +685,10 @@ class Popolamento
 
   end
 
+  def self.riequilibria_route
+
+  end
+
 end
 
 
@@ -700,6 +704,19 @@ class District < EddaDatabase
   has_many :gemellaggios, through: :routes
   has_many :vclans, through: :gemellaggios
   has_many :humen, through: :vclans
+
+  def abitanti
+    self.humen.count
+  end
+
+  def self.array_abitanti
+    where(id: [1,2,3,4,5]).map(&:abitanti)
+  end
+
+  def self.equilibrio(range=100)
+    sit = District.array_abitanti
+    sit.max - sit.min < range
+  end
 
 
   def self.situazione
@@ -745,6 +762,9 @@ class District < EddaDatabase
 end
 
 class Route < EddaDatabase
+
+  self.table_name='routes_test'
+
   belongs_to :district, foreign_key: 'quartiere'
   has_many :gemellaggios
   has_many  :vclans, through: :gemellaggios
