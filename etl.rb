@@ -301,7 +301,7 @@ class Caricamento
 
     raise "dati #{classe_capo} non coerenti: i codici censimento non sono univoci e/o completamente valorizzati" unless controllo_coerenza_capi_agesci(classe_capo)
     classe_capo.all.each do |record_capo|
-      importa_capo_extra(record_capo)
+      importa_capo_lab(record_capo)
     end.size
   end
 
@@ -770,6 +770,7 @@ end
 
 class Human < EddaDatabase
   belongs_to :periodipartecipazione, foreign_key: :periodo_partecipazione_id
+  belongs_to :dietabase, foreign_key: :dieta_alimentare_id
 
   belongs_to :vclan
   delegate :district, to: :vclan, allow_nil: true
@@ -793,6 +794,7 @@ class Colazione < EddaDatabase
 end
 
 class Dietabase < EddaDatabase
+  has_many :humen, foreign_key: :dieta_alimentare_id
 end
 
 class Chiefrole < EddaDatabase
