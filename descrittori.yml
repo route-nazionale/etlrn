@@ -1,7 +1,7 @@
 dietabase:
   -
     kkey: 1
-    name: 'NESSUNA'
+    name: 'STANDARD'
   -
     kkey: 2
     name: 'VEGETARIANO'
