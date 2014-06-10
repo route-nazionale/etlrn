@@ -684,9 +684,24 @@ class Popolamento
   def self.casmt_vclan
 
   end
+  
+  # Fintanto che i quartieri non sono in equilibrio sposta route
+  #
+  # sceglie a route più numerosa
+  # la sposta nel sottocampo più vuoto
+  # controlla e se non a posto ripete
 
-  def self.riequilibria_route
 
+  def self.riequilibria_route(range=800)
+    while !District.in_equilibrio?(range)
+      d_hash = District.hash_abitanti
+      d_max = d_hash[d_hash.keys.max]
+      d_min = d_hash[d_hash.keys.min]
+      r = d_max.routes.non_vincolate.sample
+      r.spostala!(d_min)
+      puts "Route #{r.numero} from #{d_max.id} to #{d_min.id}\n"
+      puts District.numeri_quartieri + "\n\n"
+    end    
   end
 
 end
@@ -705,19 +720,30 @@ class District < EddaDatabase
   has_many :vclans, through: :gemellaggios
   has_many :humen, through: :vclans
 
+  scope :quartieri_ragazzi, ->{where(id: [1,2,3,4,5])}
+
   def abitanti
     self.humen.count
   end
 
   def self.array_abitanti
-    where(id: [1,2,3,4,5]).map(&:abitanti)
+    quartieri_ragazzi.map(&:abitanti)
   end
 
-  def self.equilibrio(range=100)
+  def self.hash_abitanti
+    result = {}
+    quartieri_ragazzi.map{|i| result[i.abitanti] = i}
+    result
+  end
+
+  def self.in_equilibrio?(range=100)
     sit = District.array_abitanti
     sit.max - sit.min < range
   end
 
+  def self.numeri_quartieri(uni="\t")
+    array_abitanti.join(uni)
+  end
 
   def self.situazione
     situa = {RN: {
@@ -764,11 +790,21 @@ end
 class Route < EddaDatabase
 
   self.table_name='routes_test'
+  
+  scope :non_vincolate, ->{where(quartiere_lock: false)}
 
   belongs_to :district, foreign_key: 'quartiere'
   has_many :gemellaggios
   has_many  :vclans, through: :gemellaggios
   has_many  :humen, through: :vclans
+
+  def spostala(disctrict)
+    self.quartiere = district.id
+  end
+  
+  def spostala!(district)
+    self.update_attributes(quartiere: district.id)
+  end 
 end
 
 class Gemellaggio < EddaDatabase
