@@ -700,6 +700,8 @@ class Popolamento
   # la sposta nel sottocampo più vuoto
   # controlla e se non a posto ripete
 
+  ## solo equilibrio numero totale
+
 
   def self.riequilibria_route(range=800)
     while !District.in_equilibrio?(range)
@@ -709,6 +711,27 @@ class Popolamento
       r = d_max.routes.non_vincolate.sample
       r.spostala!(d_min)
       puts "Route #{r.numero} from #{d_max.id} to #{d_min.id}\n"
+      puts District.numeri_quartieri + "\n\n"
+    end    
+  end
+
+  # Fintanto che i quartieri non sono in equilibrio sposta route
+  #
+  # sceglie la route più numerosa
+  # la sposta nel sottocampo più vuoto
+  # controlla e se non a posto ripete
+
+  ## solo equilibrio numero vincolato
+
+
+  def self.riequilibria_route_vincolato(range=800)
+    while !District.in_equilibrio_persone_generale?(range)
+      d_hash = District.hash_margine_persone
+      d_max = d_hash[d_hash.keys.max]
+      d_min = d_hash[d_hash.keys.min]
+      r = d_min.routes.non_vincolate.sample
+      r.spostala!(d_max)
+      puts "Route #{r.numero} from #{d_min.id} to #{d_max.id}\n"
       puts District.numeri_quartieri + "\n\n"
     end    
   end
@@ -727,6 +750,16 @@ class Popolamento
     elenco_quartieri.map(&:assegna_contrade)
     #elenco_quartieri.map{|i| i.riequilibria_contrade(range)}
   end
+
+
+  def self.riequilibria_contrade_vincolate(quartiere= 0, range=800)
+    elenco_quartieri = District.scelta_quartiere(quartiere)
+    
+    elenco_quartieri.map{|i| i.riequilibria_contrade(range)}    
+  end
+
+
+
 
 end
 
@@ -761,9 +794,40 @@ class District < EddaDatabase
     result
   end
 
+  def self.hash_margine_persone
+    result = {}
+    quartieri_ragazzi.map{|i| result[i.margine_persone] = i}
+    result
+  end
+
+  def hash_margine_persone_contrade
+    result = {}
+    contradas.map{|i| result[i.margine_persone] = i}
+    result
+  end
+
   def self.in_equilibrio?(range=100)
     sit = District.array_abitanti
     sit.max - sit.min < range
+  end
+
+  # > 0 ci sono posti sufficienti 
+  # = 0 ci sono posti giusti
+  # < 0 ci sono posti in meno
+  def margine_persone
+    vincolo_persone - abitanti 
+  end
+  
+  def in_equilibrio_persone?(soglia=0)
+    margine_persone >= soglia
+  end
+
+  def self.in_equilibrio_persone_generale?(soglia=0)
+    quartieri_ragazzi.map{|d| d.in_equilibrio_persone?}.all?
+  end
+
+  def in_equilibrio_persone_contrade?(soglia=0)
+    contradas.map{|c| c.in_equilibrio?(soglia)}.all?
   end
 
   def self.numeri_quartieri(uni="\t")
@@ -789,6 +853,9 @@ class District < EddaDatabase
     end
   end
 
+  def riequilibria_contrade(range)
+    Contrada.riequilibria(self, range)
+  end
 
   def assegna_contrade
     elenco_routes = self.routes
@@ -837,6 +904,45 @@ class District < EddaDatabase
 
     situa
   end
+
+  def self.situazione_vincoli
+    situa = {}
+    quartieri_ragazzi.each do |q|
+      situa[q.name] = [q.vincolo_persone, q.abitanti, q.margine_persone, q.in_equilibrio_persone?]
+    end
+    situa
+  end
+  def self.situazione_vincoli_contrade
+    situa = {}
+    quartieri_ragazzi.each do |q|
+      situa[q.name] = q.situazione_vincoli_contrade
+    end
+    situa
+  end
+  def self.situazione_vincoli_contrade_saldo
+    situa = {}
+    quartieri_ragazzi.each do |q|
+      situa[q.name] = q.situazione_vincoli_contrade_saldo
+    end
+    situa
+  end
+
+  def situazione_vincoli_contrade
+    situa = {}
+    contradas.each do |c|
+      situa[c.name] = [c.vincolo_persone, c.abitanti, c.margine_persone, c.in_equilibrio_persone?]
+    end
+    situa
+  end
+  def situazione_vincoli_contrade_saldo
+    
+    contradas.map{|i| i.margine_persone}
+    
+  end
+
+  def nome
+    name
+  end
 end
 
 class Contrada < EddaDatabase
@@ -860,12 +966,31 @@ class Contrada < EddaDatabase
     vincolo_persone - abitanti 
   end
 
+  def in_equilibrio_persone?(soglia=0)
+     margine_persone >= soglia
+  end
+  
   def in_equilibrio?(soglia=0)
      margine_persone >= soglia
   end
   
   def in_equilibrio_vett?(vclans_max=80)
     vclan_presenti <= vclans_max
+  end
+
+  def self.riequilibria(quartiere, range)
+    puts "analisi #{quartiere.numero}"
+
+    while !quartiere.in_equilibrio_persone_contrade?(range)
+      d_hash = quartiere.hash_margine_persone_contrade
+      d_max = d_hash[d_hash.keys.max]
+      d_min = d_hash[d_hash.keys.min]
+      r = d_min.routes.non_vincolate.sample
+      r.spostala_di_contrada!(d_max)
+      puts "Route #{r.numero} from contrada #{d_min.id} to contrada #{d_max.id}\n"
+      ap quartiere.situazione_vincoli_contrade 
+      puts  "\n\n"
+    end
   end
 
 end
@@ -889,6 +1014,14 @@ class Route < EddaDatabase
   
   def spostala!(district)
     self.update_attributes(quartiere: district.id)
+  end
+
+  def spostala_di_contrada(district)
+    self.update_attributes(contrada_id: district.id)
+  end 
+
+  def spostala_di_contrada!(district)
+    self.update_attributes(contrada_id: district.id)
   end 
 
   def assegna_contrada(num=1)
