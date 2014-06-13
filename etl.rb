@@ -206,6 +206,15 @@ class Caricamento
     descrittori["colaziones"].each{|dieta|   Colazione.where(dieta).first_or_create}
     descrittori["chiefroles"].each{|dieta|   Chiefrole.where(dieta).first_or_create}
     descrittori["periodipartecipazione"].each{|dieta|   Periodipartecipazione.where(dieta).first_or_create}
+    ##TODO caricamento quartieri e contrade
+
+    # quartieri = CSV.read(CONFIG["files"]["quartieri"], headers: true)
+    # quartieri.map{|q| d = District.find(q["num"]); d.update_attributes(numero: q["num"], vincolo_tende: q["tende"], vincolo_persone: q["vincolo_persone"], color: q["colore"])}
+    # contrade = CSV.read(CONFIG["files"]["contrade"], headers: true)
+    # contrade.map{|q| c = Contrada.where(numero: q["numero"], district_id: q["quartire"]).first; c.update_attributes(vincolo_tende: q["tende"], vincolo_persone: q["vincolo_persone"]) if c}
+
+
+
   end
 
 
