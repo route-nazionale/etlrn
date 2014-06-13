@@ -28,11 +28,6 @@ require './adapter/importer_new'
 require './adapter/camst'
 
 
-
-
-
-
-
 ### ORDINE DA SEGUIRE
 ##
 ## 0) popolamento descrittori
@@ -60,8 +55,6 @@ class Caricamento
     # quartieri.map{|q| d = District.find(q["num"]); d.update_attributes(numero: q["num"], vincolo_tende: q["tende"], vincolo_persone: q["vincolo_persone"], color: q["colore"])}
     # contrade = CSV.read(CONFIG["files"]["contrade"], headers: true)
     # contrade.map{|q| c = Contrada.where(numero: q["numero"], district_id: q["quartire"]).first; c.update_attributes(vincolo_tende: q["tende"], vincolo_persone: q["vincolo_persone"]) if c}
-
-
 
   end
 
@@ -565,21 +558,24 @@ class Popolamento
 
   # Fintanto che i quartieri non sono in equilibrio sposta route
   #
-  # sceglie la route più numerosa
-  # la sposta nel sottocampo più vuoto
+  # sceglie la contrada con il numero maggiore di persone in eccesso
+  # e quindi un numero negativo di posti in eccesso
+  # estraa a caso una route  
+  # e la sposta nel sottocampo con più posti liberi
+  # 
   # controlla e se non a posto ripete
 
-  ## solo equilibrio numero vincolato
+  ## equilibrio basato su numero vincolato
 
 
-  def self.riequilibria_route_vincolato(range=800)
-    while !District.in_equilibrio_persone_generale?(range)
-      d_hash = District.hash_margine_persone
-      d_max = d_hash[d_hash.keys.max]
-      d_min = d_hash[d_hash.keys.min]
-      r = d_min.routes.non_vincolate.sample
-      r.spostala!(d_max)
-      puts "Route #{r.numero} from #{d_min.id} to #{d_max.id}\n"
+  def self.riequilibria_route_vincolato(soglia=0)
+    while !District.in_equilibrio_persone_generale?(soglia)
+      c_hash = District.hash_margine_persone
+      c_max = c_hash[c_hash.keys.max]
+      c_min = c_hash[c_hash.keys.min]
+      r = c_min.routes.non_vincolate.sample
+      r.spostala!(c_max)
+      puts "Route #{r.numero} from #{c_min.id} to #{c_max.id}\n"
       puts District.numeri_quartieri + "\n\n"
     end    
   end
@@ -590,20 +586,19 @@ class Popolamento
   # 0 tutte
   #
   # popolamento casuale in 5 contrade
-  # riequilibrio al margine di tolleranza range
 
-  def self.rigenera_contrade(quartiere=0, range=100)
+  def self.rigenera_contrade(quartiere=0)
     elenco_quartieri = District.scelta_quartiere(quartiere)
 
     elenco_quartieri.map(&:assegna_contrade)
-    #elenco_quartieri.map{|i| i.riequilibria_contrade(range)}
   end
 
+  # riequilibrio contrade in base ai vincoli persone presenti
 
-  def self.riequilibria_contrade_vincolate(quartiere= 0, range=800)
+  def self.riequilibria_contrade_vincolate(quartiere= 0, soglia=0)
     elenco_quartieri = District.scelta_quartiere(quartiere)
     
-    elenco_quartieri.map{|i| i.riequilibria_contrade(range)}    
+    elenco_quartieri.map{|i| i.riequilibria_contrade(soglia)}    
   end
 
 
