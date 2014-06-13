@@ -841,8 +841,9 @@ end
 
 class Contrada < EddaDatabase
   belongs_to :disctrict
-  has_many   :routes, foreign_key: 'contrada'
-
+  has_many   :routes, foreign_key: 'contrada_id'
+  has_many   :vlcans, through: :routes
+  has_many   :humen, through: :routes
 end
 
 class Route < EddaDatabase
