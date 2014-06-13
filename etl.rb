@@ -704,6 +704,21 @@ class Popolamento
     end    
   end
 
+
+  # azzera le contrade di un sottocampo o di tutti
+  # 1-5 scelta quartiere
+  # 0 tutte
+  #
+  # popolamento casuale in 5 contrade
+  # riequilibrio al margine di tolleranza range
+
+  def self.rigenera_contrade(quartiere=0, range=100)
+    elenco_quartieri = District.scelta_quartiere(quartiere)
+
+    elenco.quartieri.map(&:assegna_contrade)
+    #elenco_quartieri.map{|i| i.riequilibria_contrade(range)}
+  end
+
 end
 
 
@@ -743,6 +758,33 @@ class District < EddaDatabase
 
   def self.numeri_quartieri(uni="\t")
     array_abitanti.join(uni)
+  end
+
+  # restituisce un array di quartieri
+
+  def scelta_quartiere(quartiere)
+
+    raise "scegliere un quartiere 1-5 o 0 per tutti" unless (0..5).include? quartiere
+
+    case quartiere
+    when 0 then District.quartieri_ragazzi.all
+    else
+      [Distrinct.find(quartiere)]
+    end
+  end
+
+  def genera_contrade
+    (1..5).each do |i|
+      self.contrade.where(numero: i, name: "contrada Q#{self.id}-C#{i}").first_or_create
+    end
+  end
+
+
+  def assegna_contrade
+    elenco_routes = self.routes
+    elenco_routes.each_with_index do |r,i|
+      r.assegna_contrada((i % 5) + 1)
+    end
   end
 
   def self.situazione
@@ -787,6 +829,12 @@ class District < EddaDatabase
   end
 end
 
+class Contrada < EddaDatabase
+  belongs_to :disctrict
+  has_many   :routes, foreign_key: 'contrada'
+
+end
+
 class Route < EddaDatabase
 
   self.table_name='routes_test'
@@ -794,6 +842,8 @@ class Route < EddaDatabase
   scope :non_vincolate, ->{where(quartiere_lock: false)}
 
   belongs_to :district, foreign_key: 'quartiere'
+  belongs_to :contrada, counter_cache: true
+
   has_many :gemellaggios
   has_many  :vclans, through: :gemellaggios
   has_many  :humen, through: :vclans
@@ -805,6 +855,13 @@ class Route < EddaDatabase
   def spostala!(district)
     self.update_attributes(quartiere: district.id)
   end 
+
+  def assegna_contrada(num=1)
+    raise "è necessario il numero di una contrada da 1 a 5" unless (1..5).includes? num
+
+    self.contrada = self.district.contrade.where(numero: num).first
+    self.save
+  end
 end
 
 class Gemellaggio < EddaDatabase
@@ -827,6 +884,7 @@ end
 class Human < EddaDatabase
   belongs_to :periodipartecipazione, foreign_key: :periodo_partecipazione_id
   belongs_to :dietabase, foreign_key: :dieta_alimentare_id
+  belongs_to :tipo_colazione, foreign_key: :colazione, class_name: 'Colazione', primary_key: :kkey
 
   belongs_to :vclan
   delegate :district, to: :vclan, allow_nil: true
@@ -852,6 +910,10 @@ end
 class Dietabase < EddaDatabase
   has_many :humen, foreign_key: :dieta_alimentare_id
 end
+
+class Colazione < EddaDatabase
+end
+
 
 class Chiefrole < EddaDatabase
 end
