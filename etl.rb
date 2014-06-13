@@ -19,170 +19,18 @@ EDDA_DB = CONFIG['db']['edda_test']
 
 
 ## MODULO DI INTERFACCIA CON IMPORTER
-
-module Importer
-  class ImporterDatabase < ActiveRecord::Base
-    self.abstract_class = true
-    establish_connection CONFIG['db']['importer']
-  end
-
-  class Ragazzo < ImporterDatabase
-    self.table_name = "ragazzo"
-
-    belongs_to :gruppo, foreign_key: [:idgruppo, :idunitagruppo]
-  end
-
-
-  class Capo < ImporterDatabase
-    self.table_name = "capo"
-  end
-
-  class Quartiere < ImporterDatabase
-    self.table_name = "quartiere"
-  end
-
-  class Capoextra < ImporterDatabase
-    self.table_name = "capoextra"
-  end
-
-  class Capolaboratorio < ImporterDatabase
-    self.table_name = "capolaboratorio"
-  end
-
-  class Capooneteam < ImporterDatabase
-    self.table_name = "oneteam"
-
-    # alimentari is a TINYINT column
-    # we just redefine the method here to return the value cast how we want it
-    def nalimentari
-      self.attributes_before_type_cast['alimentari'].to_i
-    end
-  end
-
-  class Gruppo < ImporterDatabase
-    self.table_name = "gruppi"
-    self.primary_keys = :idgruppo, :unita
-    has_many :ragazzi, class_name: 'Ragazzo', foreign_key: [:idgruppo, :idunitagruppo]
-    has_many :capi, class_name:    'Capo', foreign_key: [:idgruppo, :idunitagruppo]
-
-    def ordinale
-      idgruppo.gsub(/\D+/,'')
-    end
-  end
-end
-
+require './adapter/importer'
 
 ## MODULO DI INTERFACCIA CON IMPORTER_NEW
-
-module ImporterNew
-  class ImporterNewDatabase < ActiveRecord::Base
-    self.abstract_class = true
-    establish_connection CONFIG['db']['importer_new']
-  end
-
-  class Ragazzo < ImporterNewDatabase
-    self.table_name = "ragazzo"
-
-    belongs_to :gruppo, foreign_key: [:idgruppo, :idunitagruppo]
-
-
-    def ncolazione
-      self.attributes_before_type_cast['colazione'].to_i
-    end
-    def nalimentari
-      self.attributes_before_type_cast['alimentari'].to_i
-    end
-  end
-
-
-  class Capo < ImporterNewDatabase
-    self.table_name = "capo"
-
-
-    def ncolazione
-      self.attributes_before_type_cast['colazione'].to_i
-    end
-    def nalimentari
-      self.attributes_before_type_cast['alimentari'].to_i
-    end
-  end
-
-  class Capoextra < ImporterNewDatabase
-    self.table_name = "capoextra"
-
-    def ncolazione
-      self.attributes_before_type_cast['colazione'].to_i
-    end
-    def nalimentari
-      self.attributes_before_type_cast['alimentari'].to_i
-    end
-  end
-
-  class Capolaboratorio < ImporterNewDatabase
-    self.table_name = "capolaboratorio"
-
-    def ncolazione
-      self.attributes_before_type_cast['colazione'].to_i
-    end
-    def nalimentari
-      self.attributes_before_type_cast['alimentari'].to_i
-    end
-  end
-
-  class Capooneteam < ImporterNewDatabase
-    self.table_name = "oneteam"
-
-    # alimentari is a TINYINT column
-    # we just redefine the method here to return the value cast how we want it
-
-    def ncolazione
-      self.attributes_before_type_cast['colazione'].to_i
-    end
-    def nalimentari
-      self.attributes_before_type_cast['alimentari'].to_i
-    end
-  end
-
-  class Gruppo < ImporterNewDatabase
-    self.table_name = "gruppi"
-    self.primary_keys = :idgruppo, :unita
-    has_many :ragazzi, class_name: 'Ragazzo', foreign_key: [:idgruppo, :idunitagruppo]
-    has_many :capi, class_name:    'Capo', foreign_key: [:idgruppo, :idunitagruppo]
-
-    def ordinale
-      idgruppo.gsub(/\D+/,'')
-    end
-  end
-end
-
+require './adapter/importer_new'
 
 ## MODULO DI INTERFACCIA CON CAMST
+require './adapter/camst'
 
-module Camst
-  class CamstDatabase < ActiveRecord::Base
-    self.abstract_class = true
-    establish_connection CONFIG['db']['camst']
-  end
 
-  # id  code  unit_id tipo_codice intolleranze_allergie std_meal  col     from_day  to_day  from_meal to_meal
-  #  2  19824 1       scout       nessuna               standard  latte   5         10      0         2
 
-  class Person < CamstDatabase
-    self.table_name = "meal_provision_person"
-  end
 
-  # id  vclan   vclanID unitaID gruppoID  quartier_id storeroom_id  stock_id
-  # 1   oneteam ONETEAM T1      onteam    6           26            551
-  # 2   kinder  ASILO   T1      kinder    7           27            552
 
-  class Vclan < CamstDatabase
-    self.table_name = "meal_provision_unit"
-  end
-
-  class Quartier < CamstDatabase
-    self.table_name = "meal_provision_quartier"
-  end
-end
 
 
 ### ORDINE DA SEGUIRE
