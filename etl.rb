@@ -843,7 +843,7 @@ class District < EddaDatabase
     case quartiere
     when 0 then District.quartieri_ragazzi.all
     else
-      [Distrinct.find(quartiere)]
+      [District.find(quartiere)]
     end
   end
 
@@ -930,7 +930,7 @@ class District < EddaDatabase
   def situazione_vincoli_contrade
     situa = {}
     contradas.each do |c|
-      situa[c.name] = [c.vincolo_persone, c.abitanti, c.margine_persone, c.in_equilibrio_persone?]
+      situa[c.name] = [c.vincolo_persone, c.abitanti, c.margine_persone, c.in_equilibrio_persone?, c.vclans.count, c.in_equilibrio_vett?]
     end
     situa
   end
@@ -948,7 +948,7 @@ end
 class Contrada < EddaDatabase
   belongs_to :disctrict
   has_many   :routes, foreign_key: 'contrada_id'
-  has_many   :vlcans, through: :routes
+  has_many   :vclans, through: :routes
   has_many   :humen, through: :routes
 
   def abitanti
