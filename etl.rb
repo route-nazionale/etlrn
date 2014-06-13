@@ -715,7 +715,7 @@ class Popolamento
   def self.rigenera_contrade(quartiere=0, range=100)
     elenco_quartieri = District.scelta_quartiere(quartiere)
 
-    elenco.quartieri.map(&:assegna_contrade)
+    elenco_quartieri.map(&:assegna_contrade)
     #elenco_quartieri.map{|i| i.riequilibria_contrade(range)}
   end
 
@@ -730,6 +730,7 @@ end
 
 
 class District < EddaDatabase
+  has_many :contradas
   has_many :routes, foreign_key: 'quartiere'
   has_many :gemellaggios, through: :routes
   has_many :vclans, through: :gemellaggios
@@ -762,7 +763,7 @@ class District < EddaDatabase
 
   # restituisce un array di quartieri
 
-  def scelta_quartiere(quartiere)
+  def self.scelta_quartiere(quartiere)
 
     raise "scegliere un quartiere 1-5 o 0 per tutti" unless (0..5).include? quartiere
 
@@ -775,7 +776,7 @@ class District < EddaDatabase
 
   def genera_contrade
     (1..5).each do |i|
-      self.contrade.where(numero: i, name: "contrada Q#{self.id}-C#{i}").first_or_create
+      self.contradas.where(numero: i, name: "contrada Q#{self.id}-C#{i}").first_or_create
     end
   end
 
@@ -857,9 +858,9 @@ class Route < EddaDatabase
   end 
 
   def assegna_contrada(num=1)
-    raise "è necessario il numero di una contrada da 1 a 5" unless (1..5).includes? num
+    raise "è necessario il numero di una contrada da 1 a 5" unless (1..5).include? num
 
-    self.contrada = self.district.contrade.where(numero: num).first
+    self.contrada = self.district.contradas.where(numero: num).first
     self.save
   end
 end
