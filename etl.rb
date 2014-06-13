@@ -844,6 +844,30 @@ class Contrada < EddaDatabase
   has_many   :routes, foreign_key: 'contrada_id'
   has_many   :vlcans, through: :routes
   has_many   :humen, through: :routes
+
+  def abitanti
+    humen.count
+  end
+
+  def vclan_presenti
+    vclans.count
+  end
+
+  # > 0 ci sono posti sufficienti 
+  # = 0 ci sono posti giusti
+  # < 0 ci sono posti in meno
+  def margine_persone
+    vincolo_persone - abitanti 
+  end
+
+  def in_equilibrio?(soglia=0)
+     margine_persone >= soglia
+  end
+  
+  def in_equilibrio_vett?(vclans_max=80)
+    vclan_presenti <= vclans_max
+  end
+
 end
 
 class Route < EddaDatabase
