@@ -888,7 +888,9 @@ class Human < EddaDatabase
   belongs_to :tipo_colazione, foreign_key: :colazione, class_name: 'Colazione', primary_key: :kkey
 
   belongs_to :vclan
-  delegate :district, to: :vclan, allow_nil: true
+  has_one :gemellaggio, through: :vclan
+  has_one :route, through: :gemellaggio
+  has_one :district, through: :route
 
   scope :rs,   ->{where(rs: true)}
   scope :capi, ->{where(rs: false, scout: true)}
