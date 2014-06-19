@@ -17,6 +17,10 @@ require 'csv'
 CONFIG = YAML.load_file("config.yml") unless defined? CONFIG
 EDDA_DB = CONFIG['db']['edda_test']
 
+    SPAZIO_CODICE_CLAN = 4
+    SPAZIO_CODICE_IDENTIFICATIVO = 6
+
+
 
 ## MODULO DI INTERFACCIA CON IMPORTER
 require './adapter/importer'
@@ -529,11 +533,9 @@ class Caricamento
   end
 end
 
+## Metodi per la suddivisione delle routes nei sottocampi
 
-class Popolamento
-  def self.casmt_vclan
-
-  end
+class Suddivisione
   
   # Fintanto che i quartieri non sono in equilibrio sposta route
   #
@@ -600,9 +602,6 @@ class Popolamento
     
     elenco_quartieri.map{|i| i.riequilibria_contrade(soglia)}    
   end
-
-
-
 
 end
 
@@ -791,6 +790,7 @@ end
 class Contrada < EddaDatabase
   belongs_to :disctrict
   has_many   :routes, foreign_key: 'contrada_id'
+  has_many   :gemellaggios, through: :routes
   has_many   :vclans, through: :routes
   has_many   :humen, through: :routes
 
@@ -820,6 +820,7 @@ class Contrada < EddaDatabase
   def in_equilibrio_vett?(vclans_max=80)
     vclan_presenti <= vclans_max
   end
+
 
   def self.riequilibria(quartiere, range)
     puts "analisi #{quartiere.numero}"
@@ -903,7 +904,9 @@ class Human < EddaDatabase
   has_one :district, through: :route
 
   scope :rs,   ->{where(rs: true)}
-  scope :capi, ->{where(rs: false, scout: true)}
+  scope :capi, ->{where(capo: 1)}
+  scope :extra, ->{where(extra: true)}
+  #scope :capi, ->{where(rs: false, scout: true)}
   scope :oneteam, ->{where(oneteam:true)}
 
   scope :sc1, ->{where(stradadicoraggio1: true)}
@@ -911,6 +914,65 @@ class Human < EddaDatabase
   scope :sc3, ->{where(stradadicoraggio3: true)}
   scope :sc4, ->{where(stradadicoraggio4: true)}
   scope :sc5, ->{where(stradadicoraggio5: true)}
+
+  def genera_cu
+    cu = ""
+    lettere = scegli_lettere.to_s
+    clan    = codice_clan.to_s
+    identificativo = codice_identificativo.to_s
+    cu = lettere + clan + identificativo
+
+    raise "cu no valido" unless Human.cu_valido?(cu)
+
+    return cu
+  end
+
+  def scegli_lettere
+    coppia = ""
+
+    if rs
+      coppia = "AG"
+    elsif capo == 1
+      coppia = "AA"
+    elsif extra == true
+      coppia = "AQ"
+    elsif oneteam == true
+      coppia = "OT"
+    elsif lab == true
+      coppia = "AL"
+    elsif idgruppo == "KINDER-T1"
+      coppia = "KD"
+    else
+      raise "lettere non assegnata"  
+    end
+    coppia
+  end
+
+  def codice_clan
+
+
+    codice = vclan_id.to_s.rjust(SPAZIO_CODICE_CLAN, "0")
+
+    raise "id clan troppo lungo" if codice.size > SPAZIO_CODICE_CLAN
+
+    return codice
+  end
+
+  def codice_identificativo
+
+
+    codice = id.to_s.rjust(SPAZIO_CODICE_IDENTIFICATIVO, "0")
+
+    raise "id individuale troppo lungo" if codice.size > SPAZIO_CODICE_IDENTIFICATIVO
+
+    return codice
+  end
+
+  def self.cu_valido?(cu)
+    (cu.size == 12) and ( cu =~ /(AA|AG|AQ|OT|AL|KD)(\d{4})(\d{6})/ )
+  end
+
+
 end
 
 
@@ -936,6 +998,7 @@ end
 
 class Periodipartecipazione < EddaDatabase
   has_many :humen, foreign_key: :periodo_partecipazione_id
+  has_many :vclans, through: :humen
 end
 
 
