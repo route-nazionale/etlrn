@@ -17,8 +17,9 @@ require 'csv'
 CONFIG = YAML.load_file("config.yml") unless defined? CONFIG
 EDDA_DB = CONFIG['db']['edda_test']
 
-    SPAZIO_CODICE_CLAN = 4
-    SPAZIO_CODICE_IDENTIFICATIVO = 6
+
+SPAZIO_CODICE_CLAN = 4
+SPAZIO_CODICE_IDENTIFICATIVO = 6
 
 
 
@@ -920,7 +921,7 @@ class Human < EddaDatabase
     lettere = scegli_lettere.to_s
     clan    = codice_clan.to_s
     identificativo = codice_identificativo.to_s
-    cu = lettere + clan + identificativo
+    cu = lettere + '-' +clan + '-' + identificativo
 
     raise "cu no valido" unless Human.cu_valido?(cu)
 
@@ -969,7 +970,7 @@ class Human < EddaDatabase
   end
 
   def self.cu_valido?(cu)
-    (cu.size == 12) and ( cu =~ /(AA|AG|AQ|OT|AL|KD)(\d{4})(\d{6})/ )
+    (cu.size == 14) and ( cu =~ /(AA|AG|AQ|OT|AL|KD)-(\d{4})-(\d{6})/ )
   end
 
 
