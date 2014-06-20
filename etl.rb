@@ -933,7 +933,7 @@ class Human < EddaDatabase
 
     if rs
       coppia = "AG"
-    elsif capo == 1
+    elsif capo == 1 or capo == true
       coppia = "AA"
     elsif extra == true
       coppia = "AQ"
