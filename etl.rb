@@ -536,7 +536,7 @@ end
 ## Metodi per la suddivisione delle routes nei sottocampi
 
 class Suddivisione
-  
+
   # Fintanto che i quartieri non sono in equilibrio sposta route
   #
   # sceglie a route più numerosa
@@ -555,16 +555,16 @@ class Suddivisione
       r.spostala!(d_min)
       puts "Route #{r.numero} from #{d_max.id} to #{d_min.id}\n"
       puts District.numeri_quartieri + "\n\n"
-    end    
+    end
   end
 
   # Fintanto che i quartieri non sono in equilibrio sposta route
   #
   # sceglie la contrada con il numero maggiore di persone in eccesso
   # e quindi un numero negativo di posti in eccesso
-  # estraa a caso una route  
+  # estraa a caso una route
   # e la sposta nel sottocampo con più posti liberi
-  # 
+  #
   # controlla e se non a posto ripete
 
   ## equilibrio basato su numero vincolato
@@ -579,7 +579,7 @@ class Suddivisione
       r.spostala!(c_max)
       puts "Route #{r.numero} from #{c_min.id} to #{c_max.id}\n"
       puts District.numeri_quartieri + "\n\n"
-    end    
+    end
   end
 
 
@@ -599,8 +599,8 @@ class Suddivisione
 
   def self.riequilibria_contrade_vincolate(quartiere= 0, soglia=0)
     elenco_quartieri = District.scelta_quartiere(quartiere)
-    
-    elenco_quartieri.map{|i| i.riequilibria_contrade(soglia)}    
+
+    elenco_quartieri.map{|i| i.riequilibria_contrade(soglia)}
   end
 
 end
@@ -653,13 +653,13 @@ class District < EddaDatabase
     sit.max - sit.min < range
   end
 
-  # > 0 ci sono posti sufficienti 
+  # > 0 ci sono posti sufficienti
   # = 0 ci sono posti giusti
   # < 0 ci sono posti in meno
   def margine_persone
-    vincolo_persone - abitanti 
+    vincolo_persone - abitanti
   end
-  
+
   def in_equilibrio_persone?(soglia=0)
     margine_persone >= soglia
   end
@@ -777,9 +777,9 @@ class District < EddaDatabase
     situa
   end
   def situazione_vincoli_contrade_saldo
-    
+
     contradas.map{|i| i.margine_persone}
-    
+
   end
 
   def nome
@@ -802,21 +802,21 @@ class Contrada < EddaDatabase
     vclans.count
   end
 
-  # > 0 ci sono posti sufficienti 
+  # > 0 ci sono posti sufficienti
   # = 0 ci sono posti giusti
   # < 0 ci sono posti in meno
   def margine_persone
-    vincolo_persone - abitanti 
+    vincolo_persone - abitanti
   end
 
   def in_equilibrio_persone?(soglia=0)
      margine_persone >= soglia
   end
-  
+
   def in_equilibrio?(soglia=0)
      margine_persone >= soglia
   end
-  
+
   def in_equilibrio_vett?(vclans_max=80)
     vclan_presenti <= vclans_max
   end
@@ -832,7 +832,7 @@ class Contrada < EddaDatabase
       r = d_min.routes.non_vincolate.sample
       r.spostala_di_contrada!(d_max)
       puts "Route #{r.numero} from contrada #{d_min.id} to contrada #{d_max.id}\n"
-      ap quartiere.situazione_vincoli_contrade 
+      ap quartiere.situazione_vincoli_contrade
       puts  "\n\n"
     end
   end
@@ -842,7 +842,7 @@ end
 class Route < EddaDatabase
 
   self.table_name='routes_test'
-  
+
   scope :non_vincolate, ->{where(quartiere_lock: false)}
 
   belongs_to :district, foreign_key: 'quartiere'
@@ -855,18 +855,18 @@ class Route < EddaDatabase
   def spostala(disctrict)
     self.quartiere = district.id
   end
-  
+
   def spostala!(district)
     self.update_attributes(quartiere: district.id)
   end
 
   def spostala_di_contrada(district)
     self.update_attributes(contrada_id: district.id)
-  end 
+  end
 
   def spostala_di_contrada!(district)
     self.update_attributes(contrada_id: district.id)
-  end 
+  end
 
   def assegna_contrada(num=1)
     raise "è necessario il numero di una contrada da 1 a 5" unless (1..5).include? num
@@ -943,7 +943,7 @@ class Human < EddaDatabase
     elsif idgruppo == "KINDER-T1"
       coppia = "KD"
     else
-      raise "lettere non assegnata"  
+      raise "lettere non assegnata"
     end
     coppia
   end
