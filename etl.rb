@@ -33,6 +33,9 @@ require './adapter/importer_new'
 require './adapter/camst'
 
 
+require './adapter/aquilerandagie'
+
+
 ### ORDINE DA SEGUIRE
 ##
 ## 0) popolamento descrittori

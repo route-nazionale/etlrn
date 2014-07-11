@@ -10,6 +10,11 @@ module Importer
     belongs_to :gruppo, foreign_key: [:idgruppo, :idunitagruppo]
   end
 
+  class Human < ImporterDatabase
+    self.table_name = "humen"
+    belongs_to :gruppo, foreign_key: [:idgruppo, :idunitagruppo]
+  end
+
 
   class Capo < ImporterDatabase
     self.table_name = "capo"
@@ -42,6 +47,7 @@ module Importer
     self.primary_keys = :idgruppo, :unita
     has_many :ragazzi, class_name: 'Ragazzo', foreign_key: [:idgruppo, :idunitagruppo]
     has_many :capi, class_name:    'Capo', foreign_key: [:idgruppo, :idunitagruppo]
+    has_many :humen, class_name:   'Human', foreign_key: [:idgruppo, :idunitagruppo]
 
     def ordinale
       idgruppo.gsub(/\D+/,'')
