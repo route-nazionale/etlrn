@@ -38,6 +38,9 @@ require './adapter/giotest'
 ## MODULO DI INTERFACCIA CON EVENT MANAGER
 require './adapter/labcapi'
 
+require './adapter/aquilerandagie'
+
+
 ### ORDINE DA SEGUIRE
 ##
 ## 0) popolamento descrittori
