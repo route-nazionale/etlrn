@@ -32,6 +32,11 @@ require './adapter/importer_new'
 ## MODULO DI INTERFACCIA CON CAMST
 require './adapter/camst'
 
+## MODULO DI INTERFACCIA CON CAMST
+require './adapter/giotest'
+
+## MODULO DI INTERFACCIA CON EVENT MANAGER
+require './adapter/labcapi'
 
 ### ORDINE DA SEGUIRE
 ##
@@ -432,7 +437,6 @@ class Caricamento
     end
   end
 
-  ## se idunitagruppo non è valorizzata si assume "T1"
   def self.definizione_periodo_partecipazione(record, actual_value)
     periodo = record.periodopartecipazione
 

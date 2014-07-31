@@ -7,6 +7,12 @@ module Camst
   # id  code  unit_id tipo_codice intolleranze_allergie std_meal  col     from_day  to_day  from_meal to_meal
   #  2  19824 1       scout       nessuna               standard  latte   5         10      0         2
 
+  class Response < CamstDatabase
+    self.table_name = "import_camst"
+    
+  end
+
+
   class Person < CamstDatabase
     self.table_name = "meal_provision_person"
   end
