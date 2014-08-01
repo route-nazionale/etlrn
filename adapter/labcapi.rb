@@ -19,6 +19,7 @@ module Labcapi
     self.table_name = "subscriptions"
     self.primary_keys = :id
 
+    belongs_to :turno, foreign_key: :event_happening_id_id, primary_key: :id
     belongs_to :capo, foreign_key: :scout_chief_id, primary_key: :id
   end
 
@@ -35,10 +36,10 @@ module Labcapi
 
     belongs_to :quartiere, foreign_key: :district_id
     has_many :turnos, primary_key: :id, foreign_key: :event_id
-  
+
     def self.sposta_rs(origine, destinazione)
       if (origine.class == destinazione.class) and (origine.class == Event)
-        
+
         Assegnrs.where(turno1: origine.code).map{|i| i.turno1 = destinazione.code; i.save}
         Assegnrs.where(turno2: origine.code).map{|i| i.turno2 = destinazione.code; i.save}
         Assegnrs.where(turno3: origine.code).map{|i| i.turno3 = destinazione.code; i.save}
@@ -54,15 +55,15 @@ module Labcapi
 
     def self.sposta_capi(origine, destinazione)
       if (origine.class == destinazione.class) and (origine.class == Event)
-        origine.turnos.map{|i| i.assegncapos.map{|a| h =  destinazione.turnos.where(timeslot_id: i.timeslot_id).first; 
-                                             a.event_happening_id = h.id; 
+        origine.turnos.map{|i| i.assegncapos.map{|a| h =  destinazione.turnos.where(timeslot_id: i.timeslot_id).first;
+                                             a.event_happening_id = h.id;
                                              a.save}}
-        
+
         origine.turnos.map(&:aggiorna_num_capi!)
         destinazione.turnos.map(&:aggiorna_num_capi!)
       else
         raise "origine e destinazione devo essere eventi"
-      end  
+      end
     end
 
   end

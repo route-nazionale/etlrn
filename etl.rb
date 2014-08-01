@@ -13,6 +13,7 @@ require 'active_record'
 require 'composite_primary_keys'
 require 'csv'
 
+Pry.config.editor = "nano"
 
 CONFIG = YAML.load_file("config.yml") unless defined? CONFIG
 EDDA_DB = CONFIG['db']['edda_test']
@@ -33,7 +34,7 @@ require './adapter/importer_new'
 require './adapter/camst'
 
 ## MODULO DI INTERFACCIA CON CAMST
-require './adapter/giotest'
+#require './adapter/giotest'
 
 ## MODULO DI INTERFACCIA CON EVENT MANAGER
 require './adapter/labcapi'

@@ -13,14 +13,26 @@ module Aquilerandagie
   class Human < AquilerandagieDatabase
     self.table_name = "humen"
     belongs_to :gruppo, foreign_key: [:idgruppo, :idunitagruppo]
+    has_one    :salute, foreign_key: [:cu]
   end
 
   class Personali < AquilerandagieDatabase
     self.table_name = "humen_personali"
   end
 
+  class Spalla < AquilerandagieDatabase
+    self.table_name = "humen_spalla"
+    self.primary_keys = :cu
+  end
+
+  class Abbspalla < AquilerandagieDatabase
+    self.table_name = "capiSpallaAssegnati"
+    self.primary_keys = :cu
+  end
+
   class Salute < AquilerandagieDatabase
     self.table_name = "humen_health"
+    belongs_to :human, foreign_key: [:cu]
   end
 
   class Scelta < AquilerandagieDatabase
